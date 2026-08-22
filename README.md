@@ -31,13 +31,15 @@ dans l'ordre, ne saute rien.
 ## 1. Prérequis
 
 - Un compte Discord, et être **propriétaire ou administrateur** du serveur Solaria.
-- [Node.js](https://nodejs.org) version 18 ou plus, installé sur ton ordinateur.
+- [Node.js](https://nodejs.org) version 22.5 ou plus, installé sur ton ordinateur.
   Vérifie avec :
   ```
   node -v
   ```
   Si la commande n'est pas reconnue, télécharge et installe Node.js (version "LTS")
   depuis nodejs.org, puis relance ton terminal.
+  Le bot utilise le module SQLite intégré à Node.js (`node:sqlite`) : aucune
+  compilation native n'est nécessaire, contrairement à d'autres solutions.
 - Le fichier `solaria-command.zip` que je t'ai fourni, dézippé quelque part sur ton
   ordinateur (Bureau, Documents, peu importe).
 
@@ -337,6 +339,13 @@ attends quelques minutes (Discord met parfois du temps à les afficher), ou fais
 Administrateur. Retourne à l'étape 3, régénère un lien d'invitation avec Administrator
 coché, et ré-invite le bot (ou ajuste ses permissions dans Paramètres du serveur → Rôles
 → Solaria Command).
+
+**`Error: The module '.../better_sqlite3.node' was compiled against a different
+Node.js version`** → cette erreur ne devrait plus apparaître avec cette version du
+bot, qui utilise le module SQLite intégré à Node.js (`node:sqlite`) au lieu d'un module
+externe nécessitant une compilation. Si tu la vois quand même, vérifie que tu utilises
+bien le `package.json` fourni dans ce zip (sans dépendance `better-sqlite3`) et que ton
+hébergeur utilise Node.js 22.5 ou plus.
 
 **Un joueur ne peut pas commander alors qu'il est vérifié** → il doit d'abord faire
 `/link <pseudo>`.

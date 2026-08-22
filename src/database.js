@@ -1,8 +1,8 @@
 const path = require("path");
-const Database = require("better-sqlite3");
+const { DatabaseSync } = require("node:sqlite");
 
-const db = new Database(path.join(__dirname, "..", "solaria.db"));
-db.pragma("journal_mode = WAL");
+const db = new DatabaseSync(path.join(__dirname, "..", "solaria.db"));
+db.exec("PRAGMA journal_mode = WAL;");
 
 db.exec(`
 CREATE TABLE IF NOT EXISTS settings (
@@ -127,7 +127,7 @@ function createOrder({ discordId, ign, item, quantity, totalPrice, status, isCus
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
     )
     .run(discordId, ign, item, quantity, totalPrice ?? null, status, isCustom ? 1 : 0, now, now);
-  return info.lastInsertRowid;
+  return Number(info.lastInsertRowid);
 }
 function getOrder(id) {
   return db.prepare("SELECT * FROM orders WHERE id = ?").get(id);

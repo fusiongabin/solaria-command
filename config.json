@@ -1,0 +1,39 @@
+{
+  "botName": "Solaria Command",
+  "devise": "pièces",
+  "roles": {
+    "unverified": "Non-vérifié",
+    "member": "Membre",
+    "staff": "Staff",
+    "blacklist": "Blacklist"
+  },
+  "categories": {
+    "informations": {
+      "name": "📢 Informations",
+      "channels": ["règlement", "annonces", "fonctionnement", "aide"]
+    },
+    "boutique": {
+      "name": "🛒 Boutique",
+      "channels": ["catalogue", "commandes", "stocks", "historique-achats"]
+    },
+    "communaute": {
+      "name": "💬 Communauté",
+      "channels": ["suggestions", "discussion", "signalement", "screenshots"]
+    },
+    "administration": {
+      "name": "🔒 Administration",
+      "channels": ["commandes-a-valider", "commandes-en-attente", "commandes-non-repertoriees", "logs"]
+    },
+    "tickets": {
+      "name": "🎫 Tickets",
+      "channels": []
+    }
+  },
+  "reglement": "**Règlement de Solaria**\n\n1. Respecte les autres membres, aucune insulte ni harcèlement ne sera toléré.\n2. Pas de spam, pas de publicité non autorisée.\n3. Pour passer une commande, tu dois d'abord lier ton pseudo Minecraft avec `/link`.\n4. Toute commande non payée en jeu après préparation peut entraîner un blacklist.\n5. Les décisions du staff sont finales, tu peux contester poliment en `#aide`.\n6. Réagis avec ✅ ci-dessous pour accéder au reste du serveur.",
+  "catalogueDefault": [
+    { "item": "blé", "unit_qty": 5, "unit_price": 5 },
+    { "item": "bois", "unit_qty": 10, "unit_price": 8 },
+    { "item": "fer", "unit_qty": 5, "unit_price": 15 },
+    { "item": "diamant", "unit_qty": 1, "unit_price": 50 }
+  ]
+}

@@ -16,10 +16,18 @@ CREATE TABLE IF NOT EXISTS links (
   linked_at INTEGER NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS catalog_categories (
+  name TEXT PRIMARY KEY,
+  emoji TEXT NOT NULL DEFAULT '📁',
+  created_at INTEGER NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS catalog (
   item TEXT PRIMARY KEY,
   unit_qty INTEGER NOT NULL,
-  unit_price REAL NOT NULL
+  unit_price REAL NOT NULL,
+  emoji TEXT NOT NULL DEFAULT '📦',
+  category TEXT NOT NULL DEFAULT 'Général'
 );
 
 CREATE TABLE IF NOT EXISTS blacklist (
@@ -48,10 +56,52 @@ CREATE TABLE IF NOT EXISTS tickets (
   channel_id TEXT PRIMARY KEY,
   discord_id TEXT NOT NULL,
   order_id INTEGER,
+  type TEXT NOT NULL DEFAULT 'recuperation', -- recuperation, signalement, autre
   status TEXT NOT NULL DEFAULT 'open',
   created_at INTEGER NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS suggestions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  discord_id TEXT NOT NULL,
+  text TEXT NOT NULL,
+  channel_id TEXT,
+  message_id TEXT,
+  status TEXT NOT NULL DEFAULT 'open', -- open, validated, rejected
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS suggestion_votes (
+  suggestion_id INTEGER NOT NULL,
+  discord_id TEXT NOT NULL,
+  vote INTEGER NOT NULL, -- 1 = pour, -1 = contre
+  PRIMARY KEY (suggestion_id, discord_id)
+);
 `);
+
+// Migration : ajoute la colonne 'type' si la table 'tickets' existait déjà sans elle (anciennes installs)
+try {
+  const cols = db.prepare("PRAGMA table_info(tickets)").all();
+  if (!cols.some((c) => c.name === "type")) {
+    db.exec("ALTER TABLE tickets ADD COLUMN type TEXT NOT NULL DEFAULT 'recuperation'");
+  }
+} catch {
+  // ignore
+}
+
+// Migration : ajoute la colonne 'emoji' si la table 'catalog' existait déjà sans elle (anciennes installs)
+try {
+  const catalogCols = db.prepare("PRAGMA table_info(catalog)").all();
+  if (!catalogCols.some((c) => c.name === "emoji")) {
+    db.exec("ALTER TABLE catalog ADD COLUMN emoji TEXT NOT NULL DEFAULT '📦'");
+  }
+  if (!catalogCols.some((c) => c.name === "category")) {
+    db.exec("ALTER TABLE catalog ADD COLUMN category TEXT NOT NULL DEFAULT 'Général'");
+  }
+} catch {
+  // ignore
+}
 
 // ---------- settings (key/value store for generated IDs, rules message id, etc.) ----------
 function setSetting(key, value) {
@@ -62,6 +112,12 @@ function setSetting(key, value) {
 function getSetting(key) {
   const row = db.prepare("SELECT value FROM settings WHERE key = ?").get(key);
   return row ? row.value : null;
+}
+function listSettingsByPrefix(prefix) {
+  return db.prepare("SELECT * FROM settings WHERE key LIKE ?").all(`${prefix}%`);
+}
+function deleteSettingsByPrefix(prefix) {
+  db.prepare("DELETE FROM settings WHERE key LIKE ?").run(`${prefix}%`);
 }
 
 // ---------- links ----------
@@ -83,10 +139,12 @@ function getLinkByIgn(ign) {
 }
 
 // ---------- catalog ----------
-function upsertCatalogItem(item, unitQty, unitPrice) {
+function upsertCatalogItem(item, unitQty, unitPrice, emoji = "📦", category = "Général") {
+  const cat = (category || "Général").trim() || "Général";
+  ensureCategory(cat);
   db.prepare(
-    "INSERT INTO catalog (item, unit_qty, unit_price) VALUES (?, ?, ?) ON CONFLICT(item) DO UPDATE SET unit_qty = excluded.unit_qty, unit_price = excluded.unit_price"
-  ).run(item.toLowerCase(), unitQty, unitPrice);
+    "INSERT INTO catalog (item, unit_qty, unit_price, emoji, category) VALUES (?, ?, ?, ?, ?) ON CONFLICT(item) DO UPDATE SET unit_qty = excluded.unit_qty, unit_price = excluded.unit_price, emoji = excluded.emoji, category = excluded.category"
+  ).run(item.toLowerCase(), unitQty, unitPrice, emoji || "📦", cat);
 }
 function removeCatalogItem(item) {
   db.prepare("DELETE FROM catalog WHERE item = ?").run(item.toLowerCase());
@@ -97,7 +155,40 @@ function getCatalogItem(item) {
     .get(item.toLowerCase());
 }
 function listCatalog() {
-  return db.prepare("SELECT * FROM catalog ORDER BY item ASC").all();
+  return db.prepare("SELECT * FROM catalog ORDER BY category ASC, item ASC").all();
+}
+function listCatalogByCategory(category) {
+  return db.prepare("SELECT * FROM catalog WHERE category = ? ORDER BY item ASC").all(category);
+}
+function listDistinctCatalogCategories() {
+  return db
+    .prepare("SELECT DISTINCT category FROM catalog ORDER BY category ASC")
+    .all()
+    .map((r) => r.category);
+}
+
+// ---------- catalog categories ----------
+function ensureCategory(name, emoji = "📁") {
+  db.prepare(
+    "INSERT INTO catalog_categories (name, emoji, created_at) VALUES (?, ?, ?) ON CONFLICT(name) DO NOTHING"
+  ).run(name, emoji, Date.now());
+}
+function createCategory(name, emoji = "📁") {
+  db.prepare(
+    "INSERT INTO catalog_categories (name, emoji, created_at) VALUES (?, ?, ?) ON CONFLICT(name) DO UPDATE SET emoji = excluded.emoji"
+  ).run(name, emoji || "📁", Date.now());
+}
+function removeCategory(name) {
+  db.prepare("DELETE FROM catalog_categories WHERE name = ?").run(name);
+  // Les items existants dans cette catégorie repassent dans 'Général' plutôt que d'être orphelins
+  db.prepare("UPDATE catalog SET category = 'Général' WHERE category = ?").run(name);
+}
+function listCategories() {
+  return db.prepare("SELECT * FROM catalog_categories ORDER BY name ASC").all();
+}
+function getCategoryEmoji(name) {
+  const row = db.prepare("SELECT emoji FROM catalog_categories WHERE name = ?").get(name);
+  return row?.emoji || "📁";
 }
 
 // ---------- blacklist ----------
@@ -150,10 +241,10 @@ function getOrdersByUser(discordId) {
 }
 
 // ---------- tickets ----------
-function createTicket(channelId, discordId, orderId) {
+function createTicket(channelId, discordId, orderId, type = "recuperation") {
   db.prepare(
-    "INSERT INTO tickets (channel_id, discord_id, order_id, status, created_at) VALUES (?, ?, ?, 'open', ?)"
-  ).run(channelId, discordId, orderId ?? null, Date.now());
+    "INSERT INTO tickets (channel_id, discord_id, order_id, type, status, created_at) VALUES (?, ?, ?, ?, 'open', ?)"
+  ).run(channelId, discordId, orderId ?? null, type, Date.now());
 }
 function closeTicket(channelId) {
   db.prepare("UPDATE tickets SET status = 'closed' WHERE channel_id = ?").run(channelId);
@@ -161,16 +252,59 @@ function closeTicket(channelId) {
 function getTicket(channelId) {
   return db.prepare("SELECT * FROM tickets WHERE channel_id = ?").get(channelId);
 }
-function getOpenTicketByUser(discordId) {
+function getOpenTicketByUser(discordId, type = null) {
+  if (type) {
+    return db
+      .prepare("SELECT * FROM tickets WHERE discord_id = ? AND status = 'open' AND type = ?")
+      .get(discordId, type);
+  }
   return db
     .prepare("SELECT * FROM tickets WHERE discord_id = ? AND status = 'open'")
     .get(discordId);
+}
+function getAllOpenTickets() {
+  return db.prepare("SELECT * FROM tickets WHERE status = 'open'").all();
+}
+
+// ---------- suggestions ----------
+function createSuggestion(discordId, text) {
+  const now = Date.now();
+  const info = db
+    .prepare("INSERT INTO suggestions (discord_id, text, status, created_at, updated_at) VALUES (?, ?, 'open', ?, ?)")
+    .run(discordId, text, now, now);
+  return Number(info.lastInsertRowid);
+}
+function getSuggestion(id) {
+  return db.prepare("SELECT * FROM suggestions WHERE id = ?").get(id);
+}
+function updateSuggestion(id, fields) {
+  const keys = Object.keys(fields);
+  if (keys.length === 0) return;
+  const setClause = keys.map((k) => `${k} = ?`).join(", ");
+  const values = keys.map((k) => fields[k]);
+  db.prepare(`UPDATE suggestions SET ${setClause}, updated_at = ? WHERE id = ?`).run(...values, Date.now(), id);
+}
+function setSuggestionVote(suggestionId, discordId, vote) {
+  db.prepare(
+    "INSERT INTO suggestion_votes (suggestion_id, discord_id, vote) VALUES (?, ?, ?) ON CONFLICT(suggestion_id, discord_id) DO UPDATE SET vote = excluded.vote"
+  ).run(suggestionId, discordId, vote);
+}
+function getSuggestionVoteCounts(suggestionId) {
+  const up = db
+    .prepare("SELECT COUNT(*) AS n FROM suggestion_votes WHERE suggestion_id = ? AND vote = 1")
+    .get(suggestionId).n;
+  const down = db
+    .prepare("SELECT COUNT(*) AS n FROM suggestion_votes WHERE suggestion_id = ? AND vote = -1")
+    .get(suggestionId).n;
+  return { up, down };
 }
 
 module.exports = {
   db,
   setSetting,
   getSetting,
+  listSettingsByPrefix,
+  deleteSettingsByPrefix,
   linkAccount,
   unlinkAccount,
   getLink,
@@ -179,6 +313,12 @@ module.exports = {
   removeCatalogItem,
   getCatalogItem,
   listCatalog,
+  listCatalogByCategory,
+  listDistinctCatalogCategories,
+  createCategory,
+  removeCategory,
+  listCategories,
+  getCategoryEmoji,
   addBlacklist,
   removeBlacklist,
   isBlacklisted,
@@ -191,4 +331,10 @@ module.exports = {
   closeTicket,
   getTicket,
   getOpenTicketByUser,
+  getAllOpenTickets,
+  createSuggestion,
+  getSuggestion,
+  updateSuggestion,
+  setSuggestionVote,
+  getSuggestionVoteCounts,
 };

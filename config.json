@@ -1,5 +1,5 @@
 {
-  "botName": "Solaria Command",
+  "botName": "Stellaria Command",
   "devise": "pièces",
   "roles": {
     "unverified": "Non-vérifié",
@@ -10,11 +10,11 @@
   "categories": {
     "informations": {
       "name": "📢 Informations",
-      "channels": ["règlement", "annonces", "fonctionnement", "aide"]
+      "channels": ["règlement", "annonces", "fonctionnement", "aide", "bot-commandes"]
     },
     "boutique": {
       "name": "🛒 Boutique",
-      "channels": ["catalogue", "commandes", "stocks", "historique-achats"]
+      "channels": ["catalogue", "commandes", "mes-achats", "stocks", "historique-achats"]
     },
     "communaute": {
       "name": "💬 Communauté",
@@ -24,16 +24,28 @@
       "name": "🔒 Administration",
       "channels": ["commandes-a-valider", "commandes-en-attente", "commandes-non-repertoriees", "logs"]
     },
-    "tickets": {
-      "name": "🎫 Tickets",
+    "ticketsRecuperation": {
+      "name": "🎫 Tickets Récupération",
+      "channels": []
+    },
+    "ticketsSignalement": {
+      "name": "🚨 Tickets Signalement",
+      "channels": []
+    },
+    "ticketsAutre": {
+      "name": "📩 Tickets Autres",
+      "channels": []
+    },
+    "ticketsBanniere": {
+      "name": "🎨 Tickets Bannière",
       "channels": []
     }
   },
-  "reglement": "**Règlement de Solaria**\n\n1. Respecte les autres membres, aucune insulte ni harcèlement ne sera toléré.\n2. Pas de spam, pas de publicité non autorisée.\n3. Pour passer une commande, tu dois d'abord lier ton pseudo Minecraft avec `/link`.\n4. Toute commande non payée en jeu après préparation peut entraîner un blacklist.\n5. Les décisions du staff sont finales, tu peux contester poliment en `#aide`.\n6. Réagis avec ✅ ci-dessous pour accéder au reste du serveur.",
+  "reglement": "**Règlement de Stellaria**\n\n1. Respecte les autres membres, aucune insulte ni harcèlement ne sera toléré.\n2. Pas de spam, pas de publicité non autorisée.\n3. Pour passer une commande, tu dois d'abord lier ton pseudo Minecraft avec `/link`.\n4. Toute commande non payée en jeu après préparation peut entraîner un blacklist.\n5. Les décisions du staff sont finales, tu peux contester poliment en `#aide`.\n6. Réagis avec ✅ ci-dessous pour accéder au reste du serveur.",
   "catalogueDefault": [
-    { "item": "blé", "unit_qty": 5, "unit_price": 5 },
-    { "item": "bois", "unit_qty": 10, "unit_price": 8 },
-    { "item": "fer", "unit_qty": 5, "unit_price": 15 },
-    { "item": "diamant", "unit_qty": 1, "unit_price": 50 }
+    { "item": "blé", "unit_qty": 5, "unit_price": 5, "emoji": "🌾" },
+    { "item": "bois", "unit_qty": 10, "unit_price": 8, "emoji": "🪵" },
+    { "item": "fer", "unit_qty": 5, "unit_price": 15, "emoji": "⛏️" },
+    { "item": "diamant", "unit_qty": 1, "unit_price": 50, "emoji": "💎" }
   ]
 }

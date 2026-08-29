@@ -1,6 +1,6 @@
-# Solaria Command 🌞 — Guide d'installation complet
+# Stellaria Command 🌞 — Guide d'installation complet
 
-Bot Discord pour la ville **Solaria** (serveur Minecraft *Australia*) : liaison de compte,
+Bot Discord pour la ville **Stellaria** (serveur Minecraft *Australia*) : liaison de compte,
 commandes avec catalogue et prix, validation staff en plusieurs étapes, tickets de
 récupération, règlement à rôle-réaction, blacklist, et génération automatique du serveur.
 
@@ -30,7 +30,7 @@ dans l'ordre, ne saute rien.
 
 ## 1. Prérequis
 
-- Un compte Discord, et être **propriétaire ou administrateur** du serveur Solaria.
+- Un compte Discord, et être **propriétaire ou administrateur** du serveur Stellaria.
 - [Node.js](https://nodejs.org) version 22.5 ou plus, installé sur ton ordinateur.
   Vérifie avec :
   ```
@@ -48,7 +48,7 @@ dans l'ordre, ne saute rien.
 ## 2. Créer l'application Discord (le bot)
 
 1. Va sur https://discord.com/developers/applications
-2. Clique **New Application**, donne-lui un nom (ex : `Solaria Command`), accepte les
+2. Clique **New Application**, donne-lui un nom (ex : `Stellaria Command`), accepte les
    conditions, clique **Create**.
 3. Dans le menu de gauche, va dans **Bot**.
 4. Clique **Reset Token** (ou **Add Bot** si ce n'est pas déjà fait) → confirme.
@@ -72,7 +72,7 @@ dans l'ordre, ne saute rien.
    (nécessaire car le bot doit pouvoir créer des salons, des rôles et gérer les
    permissions automatiquement lors du `/setup`)
 4. En bas, copie l'**URL générée**, colle-la dans ton navigateur, choisis ton serveur
-   Solaria, clique **Continuer** puis **Autoriser**.
+   Stellaria, clique **Continuer** puis **Autoriser**.
 5. Le bot doit maintenant apparaître (hors ligne, grisé) dans la liste des membres de
    ton serveur.
 
@@ -91,7 +91,7 @@ Tu as besoin de 3 informations :
 **C. L'ID de ton serveur (= GUILD_ID)**
 - Dans Discord (l'application, pas le site), va dans **Réglages utilisateur ⚙️ → Avancés**
   et active **Mode développeur**.
-- Fais un clic droit sur l'icône de ton serveur Solaria dans la barre de gauche →
+- Fais un clic droit sur l'icône de ton serveur Stellaria dans la barre de gauche →
   **Copier l'identifiant du serveur**.
 
 ---
@@ -155,7 +155,7 @@ Puis démarre le bot :
 npm start
 ```
 
-Tu dois voir `✅ Solaria Command connecté en tant que ...`. Le bot passe en ligne sur
+Tu dois voir `✅ Stellaria Command connecté en tant que ...`. Le bot passe en ligne sur
 Discord. **Laisse ce terminal ouvert** : si tu le fermes, le bot se déconnecte (voir
 section 12 pour le faire tourner 24/7).
 
@@ -172,19 +172,23 @@ Sur ton serveur Discord, dans n'importe quel salon, tape :
 (toi seul, en tant qu'admin, dois l'exécuter). Le bot va automatiquement :
 
 - Créer les rôles `Non-vérifié`, `Membre`, `Staff`, `Blacklist`
-- Créer les catégories et salons :
-  - **📢 Informations** : règlement, annonces, fonctionnement, aide
-  - **🛒 Boutique** : catalogue (galerie d'images libre, non gérée par le bot), commandes,
-    stocks, historique-achats
-  - **💬 Communauté** : suggestions, discussion, signalement, screenshots
-  - **🔒 Administration** (visible du staff uniquement) : commandes-a-valider,
-    commandes-en-attente, commandes-non-repertoriees, logs
-  - **🎫 Tickets** (catégorie vide, les salons de tickets s'y créeront automatiquement)
-- Poster le **règlement** dans #règlement avec une réaction ✅ (rôle réaction)
-- Poster l'embed **🛒 Commander** dans #commandes
+- Créer les catégories et salons, tous préfixés d'un emoji :
+  - **📢 Informations** : 📜・règlement, 📢・annonces, 📖・fonctionnement, ❓・aide
+  - **🛒 Boutique** : 🖼️・catalogue (galerie d'images libre), 🛒・commandes,
+    📋・mes-achats, 📦・stocks, 🧾・historique-achats
+  - **💬 Communauté** : 💡・suggestions, 💬・discussion, 🐛・signalement, 📸・screenshots
+  - **🔒 Administration** (visible du staff uniquement) : 🆕・commandes-a-valider,
+    🔨・commandes-en-attente, 📥・commandes-non-repertoriees, 📝・logs
+  - **🎫 Tickets Récupération**, **🚨 Tickets Signalement**, **📩 Tickets Autres**
+    (3 catégories vides, un salon privé est créé automatiquement dans la bonne catégorie
+    selon le type de demande)
+- Poster et **épingler** dans chaque salon un embed stylé (couleur de marque, miniature du
+  serveur, footer) expliquant son usage : règlement avec réaction ✅, guide complet
+  étape par étape dans #fonctionnement, FAQ dans #aide, bouton **🛒 Commander**,
+  tableau de bord **📋 Voir mon tableau de bord** dans #mes-achats, etc.
 
 Relancer `/setup` plus tard est **sans danger** : le bot retrouve les salons/rôles/messages
-déjà créés au lieu d'en dupliquer.
+déjà créés (par leur ID enregistré) et met juste à jour leur contenu, sans dupliquer.
 
 ---
 
@@ -195,21 +199,44 @@ Le catalogue utilisé pour les commandes est une donnée interne, gérée avec l
 vos visuels).
 
 ```
-/catalog add item:blé unite:5 prix:5
-/catalog add item:bois unite:10 prix:8
-/catalog add item:fer unite:5 prix:15
-/catalog add item:diamant unite:1 prix:50
+/catalog add item:blé unite:5 prix:5 emoji:🌾
+/catalog add item:bois unite:10 prix:8 emoji:🪵
+/catalog add item:fer unite:5 prix:15 emoji:⛏️
+/catalog add item:diamant unite:1 prix:50 emoji:💎
 ```
 
-`unite` = la quantité de référence, `prix` = son prix. Le bot calcule ensuite le prix
-proportionnellement à ce que le joueur commande (ex : 60 blé avec la ligne ci-dessus →
-60 × 5 ÷ 5 = 60 pièces).
+`unite` = la quantité de référence, `prix` = son prix, `emoji` = optionnel (📦 par défaut si
+omis). L'emoji choisi apparaît partout : dans le menu déroulant de commande, sur les
+embeds de validation/préparation, sur le tableau de bord et sur le ticket de récupération.
+Le bot calcule ensuite le prix proportionnellement à ce que le joueur commande (ex : 60
+blé avec la ligne ci-dessus → 60 × 5 ÷ 5 = 60 pièces).
 
 Autres commandes :
 ```
-/catalog list              → voir tout le catalogue
+/catalog list              → voir tout le catalogue (avec les emojis)
 /catalog remove item:blé   → retirer un item
 ```
+
+---
+
+## 9bis. Tout recommencer : `/reset`
+
+Si tu veux repartir de zéro sur la structure du serveur (par exemple pour tester, ou
+après avoir mal configuré quelque chose), la commande **`/reset`** supprime automatiquement
+tout ce que `/setup` a créé — plus besoin de supprimer les salons un par un à la main :
+
+- 🗑️ Tous les salons et catégories créés par `/setup`
+- 🗑️ Tous les rôles créés par `/setup` (`Non-vérifié`, `Membre`, `Staff`, `Blacklist`)
+- 🎫 Tous les tickets actuellement ouverts (leurs salons sont supprimés, fermés en base)
+
+**Ce qui est conservé** : le catalogue et ses catégories, les commandes passées, les
+liens de comptes Discord ↔ Minecraft, la blacklist et les suggestions. Seule la
+*structure Discord* est effacée — pas les données.
+
+Un admin tape `/reset`, un message de confirmation apparaît avec deux boutons
+(**Confirmer** / **Annuler**) — rien n'est supprimé tant que tu n'as pas cliqué sur
+**Confirmer**. Une fois confirmé, relance simplement `/setup` pour tout régénérer avec
+les mêmes données.
 
 ---
 
@@ -263,13 +290,20 @@ boutons Accepter/Refuser/Proposer un prix/Marquer comme prête.
   membre du staff clique **📦 Marquer comme prête** → le joueur reçoit un MP avec un
   bouton **🎫 Ouvrir un ticket**.
 
-### Tickets
-- Le bouton "Ouvrir un ticket" (reçu en MP, ou via la commande `/ticket` pour un ticket
-  libre hors commande) crée un salon privé visible uniquement du joueur et du staff, avec
-  le récapitulatif de la commande.
-- Le bouton **🔒 Clôturer le ticket** (staff ou le joueur lui-même) marque la commande
-  comme terminée, poste un résumé dans **#historique-achats**, note l'action dans
-  **#logs**, puis supprime le salon 10 secondes plus tard.
+### Tickets — 3 catégories séparées
+Chaque type de ticket a sa propre catégorie sur le serveur, accessible uniquement par le
+membre concerné et le staff :
+
+| Type | Comment il s'ouvre | Catégorie |
+|---|---|---|
+| 🎫 Récupération | Automatique, via le bouton reçu en MP quand une commande est prête | 🎫 Tickets Récupération |
+| 🚨 Signalement | `/signaler` → formulaire (pseudo en jeu, joueur/situation concernée, description) | 🚨 Tickets Signalement |
+| 📩 Autre | `/ticket` → formulaire (sujet, description) | 📩 Tickets Autres |
+
+Dans les trois cas : un salon privé est créé avec un récapitulatif en embed, et le bouton
+**🔒 Clôturer le ticket** (staff ou le joueur) marque la demande comme terminée, note
+l'action dans **#logs**, poste un résumé dans **#historique-achats** (uniquement pour les
+tickets liés à une commande), puis supprime le salon 10 secondes plus tard.
 
 ### Suivi de commande
 ```
@@ -278,6 +312,29 @@ boutons Accepter/Refuser/Proposer un prix/Marquer comme prête.
 Utilisable dans le serveur **ou en message privé au bot**. Affiche toutes les commandes
 du joueur avec leur statut : en attente de prix, à valider, refusée, en préparation,
 prête, terminée.
+
+Le même tableau de bord est aussi accessible via un **bouton dans #mes-achats** :
+un seul salon partagé à tous les membres, avec un embed fixe et un bouton
+**📋 Voir mon tableau de bord**. Quand un membre clique, il reçoit une réponse
+éphémère (visible que par lui) avec ses infos toujours à jour au moment du clic :
+pseudo lié, statut blacklist éventuel, et le détail de ses commandes.
+
+### Suggestions avec vote communautaire
+```
+/suggerer <ton idée>
+```
+Poste la suggestion dans **#suggestions** avec deux boutons **👍 Pour / 👎 Contre** —
+chaque membre ne peut voter qu'une fois par suggestion (revoter change son vote). Le
+staff voit en plus deux boutons **✅ Valider / ❌ Refuser** : une fois la décision prise,
+les votes sont figés, l'embed change de couleur, et l'auteur reçoit un MP avec la décision.
+
+### Aide et documentation intégrée
+- **#aide** contient une FAQ enrichie couvrant toutes les situations courantes (commande
+  bloquée, prix, récupération, signalement, ticket, suggestion...).
+- **#bot-commandes** est le salon dédié où les membres tapent les commandes du bot ; il
+  contient un embed listant **toutes** les commandes disponibles, classées par thème.
+- `/aide` affiche cette même liste en message privé, n'importe où sur le serveur (avec en
+  plus la section Staff si tu es membre de l'équipe).
 
 ### Blacklist
 ```
@@ -335,10 +392,17 @@ Token" puis copié le nouveau token.
 attends quelques minutes (Discord met parfois du temps à les afficher), ou fais
 `Ctrl+R` dans le client Discord.
 
+**"L'application n'a pas répondu à temps" / les formulaires ne s'ouvrent plus, tout
+semble aléatoirement cassé** → ce bug est corrigé dans cette version. La cause : le bot
+plantait silencieusement et redémarrait en boucle sur certaines erreurs, rendant les
+interactions indisponibles pendant ce temps. Le bot ne peut plus planter comme ça
+désormais (voir la console pour tout message commençant par `⚠️` ou `❌` si un souci
+persiste — c'est maintenant loggé au lieu de crasher).
+
 **"Missing Permissions" lors du `/setup`** → le bot n'a pas la permission
 Administrateur. Retourne à l'étape 3, régénère un lien d'invitation avec Administrator
 coché, et ré-invite le bot (ou ajuste ses permissions dans Paramètres du serveur → Rôles
-→ Solaria Command).
+→ Stellaria Command).
 
 **`Error: The module '.../better_sqlite3.node' was compiled against a different
 Node.js version`** → cette erreur ne devrait plus apparaître avec cette version du
